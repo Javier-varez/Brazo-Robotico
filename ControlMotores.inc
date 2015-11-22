@@ -90,7 +90,8 @@ low_state	bcf	    status,c
 		movwf	    ccpr1l
 		movfw	    status
 		andlw	    b'00000001'		;Enmascaramos el carry
-		sublw	    b'00000011'		;restamos C si lo hay
+		xorlw	    b'00000001'		;Invertimos el carry
+		sublw	    b'00000011'		;Restamos ~C
 		movwf	    ccpr1h		;Actualizamos ccpr1h
 
 		; Ponemos pin correspondiente en bajo

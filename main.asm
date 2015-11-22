@@ -10,9 +10,6 @@
 ; Descripción:
 ;		Código para el control y manejo del brazo robótico.
 ;======================================================================;
-
-    
-    
     
     
 #include <p16f883.inc>
@@ -101,11 +98,11 @@ init		movlw	    0x70
 		movwf	    adcon0	    ;seleccionamos Fosc/8
 		
 		goto	    cap_read	    ;Lectura capacitiva
-		
+				
 ;--------------------------;	
 ;--- Lectura capacitiva ---;
 ;--------------------------;
-		
+
 cap_read	movfw	    Sensor	    ;Ponemos todos menos Sensor como out
 		iorlw	    b'11111000'
 		bank1
@@ -206,14 +203,27 @@ conf_mux	bcf	    status,c
 		movwf	    adcon0
 		return
 
-;--- Configura led's como salidas ---;
+;--- Configura led's como salidas y puerto B ---;
 		
 conf_out	bank1			    
 		bcf	    trisc,0
 		bcf	    trisc,1
+		movlw	    b'11110000'
+		movwf	    trisb
+		bank4
+		clrf	    anselh
 		bank0
+		clrf	    portb
+		clrf	    portc
+		
 		return
 		
+;----------------;		
+;--- Includes ---;
+;----------------;
+
+#include "ControlMotores.inc"
+
 		end
 
 

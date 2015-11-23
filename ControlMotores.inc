@@ -44,7 +44,6 @@ init_motors	movlw	b'00110001'	;Habilitamos timer 1 con prescaler 1:8
 ;--- CCP1 ISR ---;
 		
 ISR_CCP1	bank0
-		bcf	    pir1,ccp1if		;Borramos la bandera
 		clrf	    tmr1h		;ponemos a 0 el timer1
 		clrf	    tmr1l
 		
@@ -62,16 +61,21 @@ ISR_CCP1	bank0
 update_vals	btfsc	    sig_state,0
 		incf	    sel_motor
 		incf	    sig_state
-
+		
+		bcf	    pir1,ccp1if		;Borramos la bandera
+		
 		return
 
 high_state	bcf	    status,c
-		movfw	    indf		;Cargamos posicion
-		addlw	    0xFA		;suma 250
+		clrf	    ccpr1h		
+		rlf	    indf,w		
+		btfsc	    status,c
+		incf	    ccpr1h,f
+		addlw	    0x7D		;suma 150 (0.5ms)
 		movwf	    ccpr1l		;Actualizamos ccpr1l
 		movfw	    status
 		andlw	    b'00000001'		;Enmascaramos el carry
-		movwf	    ccpr1h		;Actualizamos ccpr1h
+		addwf	    ccpr1h,f		;Actualizamos ccpr1h
 		
 		; Ponemos pin correspondiente en alto
 		movfw	    sel_motor		
@@ -85,14 +89,24 @@ high_state	bcf	    status,c
 		goto	    update_vals
 		
 low_state	bcf	    status,c
-		movfw	    indf
-		sublw	    0xE8
+		rlf	    indf,w
+		sublw	    0x65
 		movwf	    ccpr1l
+		
 		movfw	    status
 		andlw	    b'00000001'		;Enmascaramos el carry
 		xorlw	    b'00000001'		;Invertimos el carry
-		sublw	    b'00000011'		;Restamos ~C
+		sublw	    0x04		;Restamos ~C
 		movwf	    ccpr1h		;Actualizamos ccpr1h
+
+		bcf	    status,c
+		rlf	    indf,w
+		movfw	    ccpr1h
+		btfsc	    status,c
+		addlw	    0xFF
+		movwf	    ccpr1h
+		
+		
 
 		; Ponemos pin correspondiente en bajo
 		movfw	    sel_motor		

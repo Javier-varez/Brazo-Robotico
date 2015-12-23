@@ -52,11 +52,13 @@ bank3		macro
 ;-----------------;
 		
 		cblock	    0x20
-Sensor					    ;0x20
-AuxADC					    ;0x21
-ADCMux					    ;0x22
-AuxVar					    ;0x23
-contador				    ;0x24
+init_cap
+sensor
+AuxADC
+MuxADC
+select
+sensor_aux
+sensoresan
 		endc
 		
 ;-------------------------;
@@ -87,84 +89,15 @@ interruptv	goto	    ISR
 init		movlw	    0x70
 		bank1
 		movwf	    osccon	    ;8 MHz
+		clrf	    trisc	    ;Recordar borrar instruccion 
 		bank0
-		call	    conf_out	    ;Configura puertos de salida
-		movlw	    0x01
-		movwf	    Sensor	    ;Selecciona el sensor 0
-		movlw	    0x04
-		movwf	    AuxADC	    ;Selecciona el sensor 2 como aux
+		clrf	    sensoresan
+		call	    in_timer0
+		bsf	    intcon,gie
 		
-		movlw	    b'01000001'	    ;Activamos el ADC
-		movwf	    adcon0	    ;seleccionamos Fosc/8
-		
-		goto	    cap_read	    ;Lectura capacitiva
-				
-;--------------------------;	
-;--- Lectura capacitiva ---;
-;--------------------------;
-
-cap_read	movfw	    Sensor	    ;Ponemos todos menos Sensor como out
-		iorlw	    b'11111000'
-		bank1
-		movwf	    trisa	    ;Actualizamos el valor de trisa
-		bank0
-		movfw	    AuxADC
-		movwf	    porta	    ;Actualizamos el valor de porta
-		
-		call	    conf_adc_mux    ;MUX ADC selecciona pin aux
-		
-		comf	    Sensor,w	    ;Ponemos la linea del sensor a tierra		
-		bank1			    
-		andwf	    trisa,f
-		bank0
-				
-		movfw	    Sensor	    ;Ponemos el sensor como entrada
-		bank1
-		iorwf	    trisa,f
-		bank0
-		
-		call	    conf_adc_mux    ;MUX ADC selecciona pin sensor
-				
-		movlw	    b'00000010'	    ;Comenzamos la lectura
-		iorwf	    adcon0,f
-		
-wait		btfsc	    adcon0,go_done  ;Esperamos a que finalice
-		goto	    wait
-		
-		comf	    Sensor,w	    
-		andwf	    portc,w
-		movwf	    AuxVar
-		movfw	    adresh	    ;Leemos el valor analógico
-		andlw	    b'11000000'	    ;Descartamos los bits menos significativos
-		btfsc	    status,Z
-		goto	    turn_on_led
-		goto	    turn_off_led
-		
-turn_on_led	movfw	    AuxVar
-		iorwf	    Sensor,w
-		movwf	    portc
-		goto	    next_adc_aux
-
-turn_off_led	movfw	    AuxVar
-		movwf	    portc
-		goto	    next_adc_aux
-		
-;---------------------------------;
-;--- Pasar al siguiente sensor ---;
-;---------------------------------;
-next_adc_aux	rlf	    AuxADC,f
-		btfss	    AuxADC,3
-		goto	    next_sensor
-		movlw	    0x01
-		movwf	    AuxADC
-		
-next_sensor	rlf	    Sensor,f
-		btfss	    Sensor,3
-		goto	    cap_read
-		movlw	    0x01
-		movwf	    Sensor
-		goto	    cap_read
-		
+bucle_ppal	btfsc	    init_cap,0
+		call	    init_read
+		goto	    bucle_ppal
 ;---------------------------------;
 ;--- Interrupt Service Routine ---;
 ;---------------------------------;
@@ -172,7 +105,8 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 		swapf	    status,w	;Cargamos el registro de estado
 		movwf	    status_prev	;Almacenamos el registro de estado
 		
-					;Cálculos necesarios
+		btfsc	    intcon,t0if
+		call	    isr_timer	;Procesamiento necesario
 		
 		swapf	    status_prev,w
 		movwf	    status	;Restauramos el vector de estado
@@ -184,44 +118,14 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 ;------------------;	
 ;--- Subrutinas ---;
 ;------------------;
-		
-;--- Configuramos el MUX ADC para que apunte al pin auxiliar ---;
-conf_adc_mux	movwf	    AuxVar
-		clrf	    ADCMux
-calc_mux_val	rrf	    AuxVar,f
-		btfsc	    status,c
-		goto	    conf_mux
-		incf	    ADCMux
-		goto	    calc_mux_val
-		
-conf_mux	bcf	    status,c
-		rlf	    ADCMux,f
-		rlf	    ADCMux,f
-		movlw	    b'11000011'
-		andwf	    adcon0,w
-		iorwf	    ADCMux,w
-		movwf	    adcon0
-		return
 
-;--- Configura led's como salidas y puerto B ---;
 		
-conf_out	bank1			    
-		bcf	    trisc,0
-		bcf	    trisc,1
-		movlw	    b'11110000'
-		movwf	    trisb
-		bank4
-		clrf	    anselh
-		bank0
-		clrf	    portb
-		clrf	    portc
-		
-		return
 		
 ;----------------;		
 ;--- Includes ---;
 ;----------------;
-
+#include "Timer0.inc"
+#include "LecturaCapacitiva.inc"
 #include "ControlMotores.inc"
 
 		end

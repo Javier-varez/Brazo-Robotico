@@ -3,13 +3,9 @@
 ;--- Variables ---;
 ;-----------------;		
 
-		cblock	    0x20
+		cblock	    0x40
 sel_motor
 sig_state
-pos1
-pos2
-pos3
-pos4
 motor_aux
 sel_pin
 		endc
@@ -51,7 +47,7 @@ ISR_CCP1	bank0
 		
 		movfw	    sel_motor
 		andlw	    b'00000011'		;Mascara para seleccion
-		addlw	    0x22
+		addlw	    pos1
 		movwf	    fsr			;Seleccion direccionamiento indirecto
 		
 		btfsc	    sig_state,0

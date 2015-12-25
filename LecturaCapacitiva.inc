@@ -48,7 +48,7 @@ wait		btfsc	adcon0,go_done  ; Esperamos a que finalice
 		btfss	status,z	; sensor
 		goto	pulsado
 		
-no_pulsado	movlw	b'11100000'
+no_pulsado	movlw	b'11110000'
 		andwf	adresh,w		
 		btfss	status,z	; Comprobamos si el sensor sigue sin 
 		goto	end_read_sens	; pulsarse o se ha pulsado
@@ -99,11 +99,7 @@ cerrada		movlw	b'11000000'
 		bcf	sensoresan,0
 		goto	fin
 		
-fin		rrf	sensoresan,w
-		movwf	sensor_aux
-		rrf	sensor_aux,w
-		movwf	portc
-		return
+fin		return
 		
 ;-------------------------------------------------;
 ;------------------ Subrutinas -------------------;

@@ -59,6 +59,11 @@ MuxADC
 select
 sensor_aux
 sensoresan
+pos1	;0x27				    
+pos2	;0x28			    
+pos3	;0x29			    
+pos4	;0x2A	
+MotorSelect
 		endc
 		
 ;-------------------------;
@@ -92,11 +97,27 @@ init		movlw	    0x70
 		clrf	    trisc	    ;Recordar borrar instruccion 
 		bank0
 		clrf	    sensoresan
+		movlw	    0x6E
+		movwf	    pos1
+		movlw	    0xAC
+		movwf	    pos2
+		clrf	    pos3
+		clrf	    pos4
+		clrf	    MotorSelect
+		bank1
+		movlw	    b'11110000'
+		movwf	    trisb
+		bank3
+		clrf	    anselh
+		bank0
+		call	    init_motors
 		call	    in_timer0
 		bsf	    intcon,gie
 		
-bucle_ppal	btfsc	    init_cap,0
+bucle_ppal	btfss	    init_cap,0
+		goto	    bucle_ppal
 		call	    init_read
+		call	    ChangeMotor
 		goto	    bucle_ppal
 ;---------------------------------;
 ;--- Interrupt Service Routine ---;
@@ -105,8 +126,10 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 		swapf	    status,w	;Cargamos el registro de estado
 		movwf	    status_prev	;Almacenamos el registro de estado
 		
+		btfsc	    pir1,ccp1if
+		call	    ISR_CCP1
 		btfsc	    intcon,t0if
-		call	    isr_timer	;Procesamiento necesario
+		call	    isr_timer	;timer0_ISR
 		
 		swapf	    status_prev,w
 		movwf	    status	;Restauramos el vector de estado
@@ -126,6 +149,7 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 ;----------------;
 #include "Timer0.inc"
 #include "LecturaCapacitiva.inc"
+#include "decisiones.inc"
 #include "ControlMotores.inc"
 
 		end

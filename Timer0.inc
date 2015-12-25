@@ -8,7 +8,7 @@ in_timer0   clrwdt
 	    bank1		    ;seleccionamos el prescaler para el timer 
 	    movlw   b'11000000'	    
 	    andwf   option_reg,w
-	    iorlw   b'00000101'	    ;Prescaler a 1:64
+	    iorlw   b'00000111'	    ;Prescaler a 1:256
 	    movwf   option_reg
 	       
 ;---- Habilitar interrupción del timer0 ----;	    

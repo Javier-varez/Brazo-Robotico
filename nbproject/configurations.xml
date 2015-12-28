@@ -17,6 +17,8 @@
       <itemPath>LecturaCapacitiva.inc</itemPath>
       <itemPath>Timer0.inc</itemPath>
       <itemPath>decisiones.inc</itemPath>
+      <itemPath>inicializaciones.inc</itemPath>
+      <itemPath>bancos.inc</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

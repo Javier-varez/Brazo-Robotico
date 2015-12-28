@@ -21,49 +21,26 @@
 ; CONFIG2
 ; __config 0x3FFF
  __CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
- 
-;--- Direccionamiento directo para el banco 0 ---    
-bank0		macro
-		bcf	    status,rp0
-		bcf	    status,rp1
-		endm
 
-;--- Direccionamiento directo para el banco 1 ---    
-bank1		macro
-		bsf	    status,rp0
-		bcf	    status,rp1
-		endm
-
-;--- Direccionamiento directo para el banco 2 ---    
-bank2		macro
-		bcf	    status,rp0
-		bsf	    status,rp1
-		endm
-	    
-;--- Direccionamiento directo para el banco 3 ---    
-bank3		macro
-		bsf	    status,rp0
-		bsf	    status,rp1
-		endm
-		
+#include "bancos.inc"
 		
 ;-----------------;	    
 ;--- Variables ---;
 ;-----------------;
 		
 		cblock	    0x20
-init_cap
-sensor
-AuxADC
-MuxADC
-select
-sensor_aux
-sensoresan
-pos1	;0x27				    
-pos2	;0x28			    
-pos3	;0x29			    
-pos4	;0x2A	
-MotorSelect
+init_cap		    ;0x20
+sensor			    ;0x21
+AuxADC			    ;0x22
+MuxADC			    ;0x23
+select			    ;0x24
+sensor_aux		    ;0x25
+sensoresan		    ;0x26
+pos1			    ;0x27				    
+pos2			    ;0x28			    
+pos3			    ;0x29			    
+pos4			    ;0x2A	
+MotorSelect		    ;0x2B
 		endc
 		
 ;-------------------------;
@@ -91,34 +68,19 @@ interruptv	goto	    ISR
 ;--- Rutina de inicialización ---;
 ;--------------------------------;
 		org	    0x05
-init		movlw	    0x70
-		bank1
-		movwf	    osccon	    ;8 MHz
-		clrf	    trisc	    ;Recordar borrar instruccion 
-		bank0
-		clrf	    sensoresan
-		movlw	    0x6E
-		movwf	    pos1
-		movlw	    0xAC
-		movwf	    pos2
-		clrf	    pos3
-		clrf	    pos4
-		clrf	    MotorSelect
-		bank1
-		movlw	    b'11110000'
-		movwf	    trisb
-		bank3
-		clrf	    anselh
-		bank0
+init		call	    ini_osc
+		call	    ini_es
+		call	    ini_vars
 		call	    init_motors
 		call	    in_timer0
 		bsf	    intcon,gie
 		
-bucle_ppal	btfss	    init_cap,0
+bucle_ppal	btfss	    init_cap,0	; Comprobamos si necesitamos actualizar
 		goto	    bucle_ppal
-		call	    init_read
-		call	    ChangeMotor
+		call	    init_read	; Lectura capacitiva de sensores
+		call	    ChangeMotor	; Actualizacion de posicion
 		goto	    bucle_ppal
+		
 ;---------------------------------;
 ;--- Interrupt Service Routine ---;
 ;---------------------------------;
@@ -138,15 +100,10 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 		retfie			;Volvemos de la interrupción
 		
 		
-;------------------;	
-;--- Subrutinas ---;
-;------------------;
-
-		
-		
 ;----------------;		
 ;--- Includes ---;
 ;----------------;
+#include "inicializaciones.inc"
 #include "Timer0.inc"
 #include "LecturaCapacitiva.inc"
 #include "decisiones.inc"

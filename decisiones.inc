@@ -14,6 +14,24 @@ SensoresAnDelayed
 #define pinza_c		SensoresAn,0
 #define left_sensor	portb,4
 #define right_sensor	portb,5
+
+;---------------------------------;
+;---- Inicializaciones -----------;
+;---------------------------------;
+		
+ini_vars	; Lectura inicial de sensores = 0
+		clrf	    sensoresan
+		; Posicion inicial de los motores
+		movlw	    0x6E
+		movwf	    pos1
+		movlw	    0xAC
+		movwf	    pos2
+		clrf	    pos3
+		clrf	    pos4
+		; Motor seleccionado = 0
+		clrf	    MotorSelect		
+		return
+		
 ;---------------------------------;
 ;---- Motor Select ---------------;
 ;---------------------------------;

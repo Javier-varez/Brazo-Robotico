@@ -5,6 +5,10 @@
 
 		cblock	0x30
 SensoresAnDelayed
+invert_1
+invert_2
+invert_3
+invert_4
 		endc
 
 ;--- Definiciones ---;
@@ -20,16 +24,28 @@ SensoresAnDelayed
 ;---------------------------------;
 		
 ini_vars	; Lectura inicial de sensores = 0
-		clrf	    sensoresan
+		clrf	    SensoresAn
+		clrf	    SensoresAnDelayed
 		; Posicion inicial de los motores
 		movlw	    0x6E
 		movwf	    pos1
 		movlw	    0xAC
 		movwf	    pos2
-		clrf	    pos3
-		clrf	    pos4
+		movlw	    0x00
+		movwf	    pos3
+		movlw	    0x80
+		movwf	    pos4
 		; Motor seleccionado = 0
-		clrf	    MotorSelect		
+		clrf	    MotorSelect	
+		; Invertir movimientos
+		movlw	    0x00
+		movwf	    invert_1
+		movlw	    0x00
+		movwf	    invert_2
+		movlw	    0x00
+		movwf	    invert_3
+		movlw	    0x01
+		movwf	    invert_4
 		return
 		
 ;---------------------------------;
@@ -53,11 +69,55 @@ ChangeMotor
 ;---------------------------------;
 
 CheckDer
-		btfss	right_sensor	    ;Comprueba si el sensor está a 1
+		movf	MotorSelect,f	    ;Z = 1 si MotorSelect es 0
+		btfss   status,Z	    ;Si Z = 1 salta
+		goto	CheckSensAnDer
+		btfsc	right_sensor	    ;Si el sensor esta a 1, inmoviliza el robot
+		goto	CheckIz		    ;Chequea el boton izq
+CheckSensAnDer	btfss	right		    ;Comprueba que se haya pulsado Derecha/Abajo +
 		goto	CheckIz
-		btfss	right		    ;Comprueba que se haya pulsado Derecha/Abajo +
+		movf	MotorSelect,w
+		addlw	invert_1	    ;Direcciona el invert correspondiente
+		movwf	fsr
+		btfsc	indf,0		    ;Salta si invert_x[0] == 0
+		goto	DerInvert
+		call	MotorDec
 		goto	CheckIz
-		goto	MotorDec
+
+DerInvert	call	MotorInc
+		goto	CheckIz
+		
+;---------------------------------;
+;----Izquierda/Arriba-------------;
+;---------------------------------;
+	
+CheckIz
+		movf	MotorSelect,f	    ;Z = 1 si MotorSelect es 0
+		btfss   status,Z	    ;Si Z = 1 salta
+		goto	CheckSensAnIzq
+		btfsc	left_sensor	    ;Si el sensor esta a 1, inmoviliza el robot
+		goto	storeSensAn	    ;Almacena el estado actual
+		
+CheckSensAnIzq	btfss	left		    ;Comprueba que se haya pulsado Izquierda/Arriba +
+		goto	storeSensAn
+		movf	MotorSelect,w
+		addlw	invert_1	    ;Direcciona el invert correspondiente
+		movwf	fsr
+		btfsc	indf,0		    ;Salta si invert_x[0] == 0
+		goto	IzqInvert
+		call	MotorInc
+		goto	storeSensAn
+
+IzqInvert	call	MotorDec
+		goto	storeSensAn
+
+storeSensAn	movfw	SensoresAn
+		movwf	SensoresAnDelayed
+		movfw	MotorSelect
+		movwf	portc
+		return
+		
+;==== Subrutinas ====;
 		
 
 MotorDec
@@ -68,18 +128,7 @@ MotorDec
 		movfw	indf
 		btfss	status,Z	    ;Si la posicion es 0, no decrementa
 		decf	indf,f
-		goto	CheckIz
-		
-;---------------------------------;
-;----Izquierda/Arriba-------------;
-;---------------------------------;
-	
-CheckIz
-		btfss	left_sensor	    ;Comprueba si el sensor está a 1
-		goto	storeSensAn
-		btfss	left		    ;Comprueba que se haya pulsado Izquierda/Arriba +
-		goto	storeSensAn
-		goto	MotorInc
+		return
 		
 MotorInc	
 		movf	MotorSelect,w	    ;Mueve el contenido del registro al W
@@ -89,11 +138,4 @@ MotorInc
 		comf	indf,w
 		btfss	status,Z	    ;Si la posicion es 0, no incrementa
 		incf	indf,f
-		goto	storeSensAn
-
-
-storeSensAn	movfw	SensoresAn
-		movwf	SensoresAnDelayed
-		movfw	MotorSelect
-		movwf	portc
 		return

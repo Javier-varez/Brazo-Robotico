@@ -43,8 +43,7 @@ ISR_CCP1	bank0
 		clrf	    tmr1h		;ponemos a 0 el timer1
 		clrf	    tmr1l
 		
-		; Do your stuff here
-		
+		;Seleccion del motor
 		movfw	    sel_motor
 		andlw	    b'00000011'		;Mascara para seleccion
 		addlw	    pos1
@@ -79,7 +78,7 @@ high_state	bcf	    status,c
 		movwf	    motor_aux
 		movlw	    b'00000001'
 		movwf	    sel_pin
-		call	    rotate_w_times
+		call	    rotate_w_times	
 		movfw	    sel_pin
 		iorwf	    portb,f
 		goto	    update_vals
@@ -115,7 +114,7 @@ low_state	bcf	    status,c
 		andwf	    portb,f
 		goto	    update_vals
 		
-		
+;Rota sel_pin a la izquierda las veces establecidas en W
 rotate_w_times	bcf	    status,C
 		btfsc	    status,Z
 		return

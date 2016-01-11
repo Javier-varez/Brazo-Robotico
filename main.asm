@@ -8,7 +8,9 @@
 ; Fecha:	28/10/2015
 ;======================================================================;
 ; Descripción:
-;		Código para el control y manejo del brazo robótico.
+;		Código para el control y manejo del brazo robótico
+;		de 3 grados de libertad con deteccion de colisiones
+;		y agarre de la pinza.
 ;======================================================================;
     
     

@@ -43,6 +43,7 @@ pos2			    ;0x28
 pos3			    ;0x29			    
 pos4			    ;0x2A	
 MotorSelect		    ;0x2B
+timer0_prescaler	    ;0x2C
 		endc
 		
 ;-------------------------;
@@ -72,10 +73,13 @@ interruptv	goto	    ISR
 		org	    0x05
 init		call	    ini_osc
 		call	    ini_es
+		call	    ini_eeprom
 		call	    ini_vars
 		call	    init_motors
 		call	    in_timer0
-		bsf	    intcon,gie
+		call	    init_uart
+		bsf	    intcon,peie	;Habilitamos interrupciones de perifericos
+		bsf	    intcon,gie	;Habilitamos interrupciones
 		
 bucle_ppal	btfss	    init_cap,0	; Comprobamos si necesitamos actualizar
 		goto	    bucle_ppal
@@ -90,10 +94,14 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 		swapf	    status,w	;Cargamos el registro de estado
 		movwf	    status_prev	;Almacenamos el registro de estado
 		
-		btfsc	    pir1,ccp1if
-		call	    ISR_CCP1
+		btfsc	    pir1,ccp1if	
+		call	    ISR_CCP1	;CCP1
 		btfsc	    intcon,t0if
-		call	    isr_timer	;timer0_ISR
+		call	    isr_timer	;timer0
+		btfsc	    pir2,eeif
+		call	    ISR_EEPROM  ;EEPROM
+		btfsc	    pir1,rcif
+		call	    ISR_UART	;UART
 		
 		swapf	    status_prev,w
 		movwf	    status	;Restauramos el vector de estado
@@ -110,7 +118,9 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 #include "LecturaCapacitiva.inc"
 #include "decisiones.inc"
 #include "ControlMotores.inc"
-
+#include "uart.inc"
+#include "eeprom.inc"
+		
 		end
 
 

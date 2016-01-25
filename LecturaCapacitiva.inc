@@ -72,32 +72,46 @@ end_read_sens	movlw	b'00000100'	; Comprobamos si ya se han leido todos
 		goto	cap_read
 		
 ;----- Programa para la pinza -----;
-pinza		movlw	b'10010001'	; Elegimos pin de la pinza en ADC y 
+pinza		movlw	b'10001101'	; Pin Aux como entrada ADC
+		movwf	adcon0
+		movlw	b'10010001'	; Elegimos pin de la pinza en ADC y 
 		movwf	adcon0		; comenzamos la lectura
+		
 		bsf	adcon0,go_done
 		
 wait_p		btfsc	adcon0,go_done  ; Esperamos a que finalice
 		goto	wait_p
 		
-		movlw	b'00000001'
-		andwf	sensoresan,w	; Comprobamos el estado anterior de la 
-		btfss	status,z	; pinza
-		goto	cerrada
 		
-abierta		movlw	b'11100000'
-		andwf	adresh,w		
-		btfss	status,z	; Comprobamos si la pinza ha llegado 
-		goto	fin		; al máximo o no
-		bsf	sensoresan,0
+		movfw	adresh
+		sublw	0xE8
+		btfss	status,c
+		goto	abierta	
+
+cerrada		bsf	sensoresan,0
 		goto	fin
+		
+abierta		bcf	sensoresan,0
+		
+		;movlw	b'00000001'
+		;andwf	sensoresan,w	; Comprobamos el estado anterior de la 
+		;btfss	status,z	; pinza
+		;goto	cerrada
+		
+;abierta		movlw	b'10000000'
+;		andwf	adresh,w		
+;		btfss	status,z	; Comprobamos si la pinza ha llegado 
+;		goto	fin		; al máximo o no
+;		bsf	sensoresan,0
+;		goto	fin
 				
-cerrada		movlw	b'11000000'
-		andwf	adresh,w	
-		btfsc	status,z	; Comprobamos si la pinza sigue en su
-		goto	fin		; máximo o se ha abierto
-		movlw	b'00000001'
-		bcf	sensoresan,0
-		goto	fin
+;cerrada		movlw	b'10000000'
+;		andwf	adresh,w	
+;		btfsc	status,z	; Comprobamos si la pinza sigue en su
+;		goto	fin		; máximo o se ha abierto
+;		movlw	b'00000001'
+;		bcf	sensoresan,0
+;		goto	fin
 		
 fin		return
 		

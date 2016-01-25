@@ -27,24 +27,32 @@ ini_vars	; Lectura inicial de sensores = 0
 		clrf	    SensoresAn
 		clrf	    SensoresAnDelayed
 		; Posicion inicial de los motores
-		movlw	    0x6E
-		movwf	    pos1
-		movlw	    0xAC
-		movwf	    pos2
 		movlw	    0x00
+		call	    eeprom_read
+		movwf	    pos1
+		movlw	    0x01
+		call	    eeprom_read
+		movwf	    pos2
+		movlw	    0x02
+		call	    eeprom_read
 		movwf	    pos3
-		movlw	    0x80
+		movlw	    0x03
+		call	    eeprom_read
 		movwf	    pos4
 		; Motor seleccionado = 0
 		clrf	    MotorSelect	
 		; Invertir movimientos
-		movlw	    0x00
+		movlw	    0x04
+		call	    eeprom_read
 		movwf	    invert_1
-		movlw	    0x00
+		movlw	    0x05
+		call	    eeprom_read
 		movwf	    invert_2
-		movlw	    0x00
+		movlw	    0x06
+		call	    eeprom_read
 		movwf	    invert_3
-		movlw	    0x01
+		movlw	    0x07
+		call	    eeprom_read
 		movwf	    invert_4
 		return
 		
@@ -94,10 +102,17 @@ DerInvert	call	MotorInc
 CheckIz
 		movf	MotorSelect,f	    ;Z = 1 si MotorSelect es 0
 		btfss   status,Z	    ;Si Z = 1 salta
-		goto	CheckSensAnIzq
+		goto	CheckPinza
 		btfsc	left_sensor	    ;Si el sensor esta a 1, inmoviliza el robot
 		goto	storeSensAn	    ;Almacena el estado actual
-		
+
+CheckPinza	movfw	MotorSelect
+		sublw	b'00000011'	    ;Comprobamos Si MotorSel es la pinza
+		btfss	status,Z
+		goto	CheckSensAnIzq
+		btfsc	pinza_c
+		goto	storeSensAn
+
 CheckSensAnIzq	btfss	left		    ;Comprueba que se haya pulsado Izquierda/Arriba +
 		goto	storeSensAn
 		movf	MotorSelect,w

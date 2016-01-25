@@ -16,6 +16,11 @@ eeprom_read	bank2
     
 ISR_EEPROM	bank3
 		bcf	eecon1,wren	;Disable write enable
+		bank3
+		bsf	eecon1,rd	;Start read op
+		bank2
+		movfw	eedata		;Copy value to w
+		call	send_data
 		bank0
 		bcf	pir2,eeif	;Clear flag
 		

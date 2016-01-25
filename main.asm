@@ -73,11 +73,11 @@ interruptv	goto	    ISR
 		org	    0x05
 init		call	    ini_osc
 		call	    ini_es
-		call	    ini_eeprom
-		call	    ini_vars
-		call	    init_motors
-		call	    in_timer0
-		call	    init_uart
+		call	    ini_eeprom	
+		call	    ini_vars	;Inicializa posicion inicial y sentidos (archivo decisiones.inc)
+		call	    init_motors	;Inicializa las variables relativas a los motores y SFR's
+		call	    in_timer0	;Inicializa el timer 0
+		call	    init_uart	;Inicializa la UART
 		bsf	    intcon,peie	;Habilitamos interrupciones de perifericos
 		bsf	    intcon,gie	;Habilitamos interrupciones
 		
@@ -101,9 +101,15 @@ ISR		movwf	    w_prev	;Almacenamos el acumulador
 		btfsc	    pir2,eeif
 		call	    ISR_EEPROM  ;EEPROM
 		btfsc	    pir1,rcif
-		call	    ISR_UART	;UART
+		call	    ISR_RX_UART	;UART RX
+		bank1
+		btfss	    pie1,txie	;Si esta activa la interrucion de TX
+		goto	    exit_isr
+		bank0
+		btfsc	    pir1,txif
+		call	    ISR_TX_UART	;UART TX
 		
-		swapf	    status_prev,w
+exit_isr	swapf	    status_prev,w
 		movwf	    status	;Restauramos el vector de estado
 		swapf	    w_prev,f	
 		swapf	    w_prev,w	;Restauramos w sin modificar status

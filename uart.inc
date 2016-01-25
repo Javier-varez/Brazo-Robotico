@@ -87,7 +87,7 @@ exit_programming    bcf	    programming_mode,0
 		    
 ; Subrutina para enviar datos por UART
 send_data	    bank1
-		    btfsc   txsta,trmt
+		    btfsc   txsta,trmt		;Chequea si está ocupado el TX
 		    goto    send_inmediately
 		    goto    enable_tx_interrupt
 		    
@@ -103,10 +103,10 @@ send_inmediately    bank0
 ;TX_ISR
 		    
 ISR_TX_UART	    bank0
-		    movfw   tx_soft_buffer
-		    movwf   txreg
+		    movfw   tx_soft_buffer  ;Obtiene el dato a enviar
+		    movwf   txreg	    ;Envia el dato
 		    bank1
-		    bcf	    pie1,txie
+		    bcf	    pie1,txie	    ;Desactiva la interrupcion de TX
 		    bank0
 		    return
 		    

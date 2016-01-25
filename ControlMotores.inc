@@ -72,7 +72,7 @@ high_state	bcf	    status,c
 		movwf	    motor_aux
 		movlw	    b'00000001'
 		movwf	    sel_pin
-		call	    rotate_w_times	
+		call	    rotate_x_times	
 		movfw	    sel_pin
 		iorwf	    portb,f
 		goto	    update_vals
@@ -108,16 +108,18 @@ low_state	;Se debe restar a 4.5 ms (0x465) el valor contenido en indf
 		movwf	    motor_aux
 		movlw	    b'00000001'
 		movwf	    sel_pin		;Selecciona el bit del puerto B 
-		call	    rotate_w_times	;correspondiente al motor
+		call	    rotate_x_times	;correspondiente al motor
 		comf	    sel_pin,w		;Lo invierte para ponerlo a cero
 		andwf	    portb,f		;utilizando un and.
 		goto	    update_vals
 		
-;Rota sel_pin a la izquierda las veces establecidas en W
-rotate_w_times	bcf	    status,C
-		btfsc	    status,Z
+;Rota sel_pin a la izquierda las veces establecidas en motor_aux
+rotate_x_times	bcf	    status,C
+		;La primera vez entra con Z de motor_aux, porque movlw y movwf 
+		;no modifican la Z en el registro de estado.
+		btfsc	    status,Z		
 		return
-		decf	    motor_aux
+		decf	    motor_aux,f
 		rlf	    sel_pin,f
-		goto	    rotate_w_times
+		goto	    rotate_x_times
 		

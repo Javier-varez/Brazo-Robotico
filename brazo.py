@@ -3,20 +3,26 @@
 import serial
 import serial.tools.list_ports
 import os
+import sys
 
+# Constantes
+switch_programming = 0x66
+enter_programming_ack = 0xFF
+exit_programming_ack = 0x80
 # Funciones
 
 clear = lambda: os.system('clear')
 
-def enter_programming_mode(addr,data):
-    ser.write(chr(0x66))
+def enter_programming_mode():
+    ser.write(chr(switch_programming))
     response = ser.read(1)
-    if response==chr(0xFF):
+    if response==chr(enter_programming_ack):
         print('Comms channel opened.');
-        write_EEPROM(addr,data)
-        exit_programming_mode()
-    elif response==chr(0x80):
+    elif response==chr(exit_programming_ack):
         enter_programming_mode()
+    else:
+        print('Programming mode couldn\'t be stablished. Exiting now... ')
+        sys.exit()
 
 
 
@@ -32,9 +38,15 @@ def write_EEPROM(addr,data):
         print('Error! Write op failed. Data = ' + hex(written_val))
 
 def exit_programming_mode():
-    ser.write(chr(0x66))
-    if ser.read(1)==chr(0x80):
+    ser.write(chr(switch_programming))
+    response = ser.read(1)
+    if response==chr(exit_programming_ack):
         print('Comms channel closed.')
+    elif response==chr(enter_programming_ack):
+        exit_programming_mode()
+    else:
+        print('There was a problem communicating with the device. Exiting now...')
+        sys.exit()
 
 # Main code
 clear()
@@ -77,4 +89,8 @@ print(u'=====================================\n')
 print('Attempting write to EEPROM:')
 print('')
 
-enter_programming_mode(addr,data)
+enter_programming_mode()
+write_EEPROM(addr,data)
+exit_programming_mode()
+
+ser.close()

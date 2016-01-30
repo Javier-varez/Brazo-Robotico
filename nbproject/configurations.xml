@@ -21,6 +21,7 @@
       <itemPath>bancos.inc</itemPath>
       <itemPath>uart.inc</itemPath>
       <itemPath>eeprom.inc</itemPath>
+      <itemPath>RemoteCtrl.inc</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

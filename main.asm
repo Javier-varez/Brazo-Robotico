@@ -78,12 +78,15 @@ init		call	    ini_osc
 		call	    init_motors	;Inicializa las variables relativas a los motores y SFR's
 		call	    in_timer0	;Inicializa el timer 0
 		call	    init_uart	;Inicializa la UART
+		call	    remote_init ;Inicializa Remote Ctrl
 		bsf	    intcon,peie	;Habilitamos interrupciones de perifericos
 		bsf	    intcon,gie	;Habilitamos interrupciones
 		
 bucle_ppal	btfss	    init_cap,0	; Comprobamos si necesitamos actualizar
 		goto	    bucle_ppal
 		call	    init_read	; Lectura capacitiva de sensores
+		btfsc	    ctrl_mode,0
+		call	    remotePos	; Posicion remota
 		call	    ChangeMotor	; Actualizacion de posicion
 		goto	    bucle_ppal
 		
@@ -126,7 +129,7 @@ exit_isr	swapf	    status_prev,w
 #include "ControlMotores.inc"
 #include "uart.inc"
 #include "eeprom.inc"
-		
+#include "RemoteCtrl.inc"
 		end
 
 

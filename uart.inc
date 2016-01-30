@@ -6,12 +6,15 @@
 
 ;==== variables ====;
 cblock		    0x50
+current_data
 wait_data
 programming_mode
 tx_soft_buffer
+ctrl_mode
 endc
 		    
 #define programming_code    0x66
+#define ctrl_code	    0x6F
 		    
 ;==== Inicialización ====;
 init_uart	    bank3
@@ -33,16 +36,24 @@ init_uart	    bank3
 		    bsf	    rcsta,cren
 		    clrf    wait_data	;inicializa variable wait_data
 		    clrf    programming_mode	;modo de programacion desactivado
+		    clrf    ctrl_mode
 		    
 		    return
 
 ;==== ISR UART ====;
 ISR_RX_UART	    bank0
 		    movfw   rcreg
+		    movwf   current_data
 		    
-		    btfss   programming_mode,0	;si no esta activado el modo
-		    goto    enter_programming	;programacion, intenta activarlo
+		    btfsc   programming_mode,0	;Si modo Progr. Entra en la rutina
+		    goto    p_mode
 		    
+		    btfsc   ctrl_mode,0		;Si modo Ctrl. Entra en la rutina
+		    goto    c_mode
+		    
+		    goto    enter_programming	;En caso contrario, activa modo
+		    
+p_mode		    movfw   current_data
 		    btfss   wait_data,0		;en funcion de estar esperando
 		    goto    received_addr	;dato o no, salta a la rutina correspondiente
 		    
@@ -74,7 +85,7 @@ received_addr	    bank2
 
 enter_programming   sublw   programming_code
 		    btfss   status,Z
-		    return
+		    goto    enter_ctrl
 		    bsf	    programming_mode,0
 		    movlw   0xFF
 		    call    send_data
@@ -82,6 +93,28 @@ enter_programming   sublw   programming_code
 		    
 exit_programming    bcf	    programming_mode,0
 		    movlw   0x80
+		    call    send_data
+		    return 
+		    
+enter_ctrl	    movfw   current_data
+		    sublw   ctrl_code
+		    btfss   status,Z
+		    return
+		    bsf	    ctrl_mode,0
+		    movlw   0xF0
+		    call    send_data
+		    return
+		    
+c_mode		    sublw   ctrl_code
+		    btfsc   status,Z
+		    goto    exit_ctrl
+		    movfw   current_data
+		    andlw   0x0E
+		    movwf   RemoteCtrls
+		    return
+		   
+exit_ctrl	    bcf	    ctrl_mode,0
+		    movlw   0x8F
 		    call    send_data
 		    return 
 		    

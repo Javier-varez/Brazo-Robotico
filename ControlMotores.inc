@@ -46,14 +46,6 @@ ISR_CCP1	bank0
 		btfsc	    sig_state,0
 		goto	    low_state
 		goto	    high_state
-		
-update_vals	btfsc	    sig_state,0
-		incf	    sel_motor
-		incf	    sig_state
-		
-		bcf	    pir1,ccp1if		;Borramos la bandera
-		
-		return
 
 high_state	bcf	    status,c
 		clrf	    ccpr1h		
@@ -113,6 +105,16 @@ low_state	;Se debe restar a 4.5 ms (0x465) el valor contenido en indf
 		andwf	    portb,f		;utilizando un and.
 		goto	    update_vals
 		
+		
+update_vals	btfsc	    sig_state,0
+		incf	    sel_motor
+		incf	    sig_state
+		
+		bcf	    pir1,ccp1if		;Borramos la bandera
+		
+		return
+
+;===== Subrutinas =====;		
 ;Rota sel_pin a la izquierda las veces establecidas en motor_aux
 rotate_x_times	bcf	    status,C
 		;La primera vez entra con Z de motor_aux, porque movlw y movwf 
